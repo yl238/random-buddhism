@@ -5,7 +5,9 @@ An Android app (built for the Pixel 7) that sends one notification a day, at a r
 - a random sutta from [dhammatalks.org/suttas](https://www.dhammatalks.org/suttas/), which opens in an in-app reader, or
 - a random short morning talk from [dhammatalks.org/audio/morning](https://www.dhammatalks.org/audio/morning/), which plays at **0.75×** by default with background playback and lock-screen controls.
 
-The app also has a "Give me one now" button, a history of past picks and a settings screen. Settings cover the time window, the sutta/talk mix, the default speed and an optional exact-time alarm.
+The app never shows when the next teaching is due, so each one is a surprise.
+
+It also has a "Give me one now" button, a history of past picks and a settings screen. Settings cover the time window, the sutta/talk mix, the default speed and an optional exact-time alarm.
 
 ## Build and install
 
@@ -34,7 +36,12 @@ The unit tests cover:
   adb shell am broadcast -a org.randomdhamma.debug.FIRE_IN --ei seconds 20 \
       -n org.randomdhamma/.debug.DebugTriggerReceiver
   ```
-- **Check the alarm:**
+- **Re-roll today's time (debug builds only):** pick a fresh random time without showing it.
+  ```sh
+  adb shell am broadcast -a org.randomdhamma.debug.REROLL \
+      -n org.randomdhamma/.debug.DebugTriggerReceiver
+  ```
+- **Check the alarm:** note this prints the scheduled time, which spoils the surprise.
   ```sh
   adb shell dumpsys alarm | grep randomdhamma
   ```

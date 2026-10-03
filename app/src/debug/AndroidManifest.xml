@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Debug builds only: lets adb arm the real daily alarm a few seconds from now. -->
+<!-- Debug builds only: lets adb arm the real daily alarm a few seconds from now, or re-roll it. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <receiver
@@ -9,6 +9,7 @@
             xmlns:tools="http://schemas.android.com/tools">
             <intent-filter>
                 <action android:name="org.randomdhamma.debug.FIRE_IN" />
+                <action android:name="org.randomdhamma.debug.REROLL" />
             </intent-filter>
         </receiver>
     </application>

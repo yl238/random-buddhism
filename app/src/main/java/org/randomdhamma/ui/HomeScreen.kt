@@ -85,15 +85,13 @@ fun HomeScreen(onOpen: (Pick) -> Unit, snackbar: SnackbarHostState) {
             )
         }
 
-        val s = settings
-        if (s != null) {
-            val next = when {
-                !s.notificationsEnabled -> "Daily notifications are off."
-                s.nextFireAt > 0 && s.useExactAlarms -> "Next daily teaching: ${formatDateTime(s.nextFireAt)}"
-                s.nextFireAt > 0 -> "Next daily teaching: around ${formatDateTime(s.nextFireAt)}"
-                else -> "Scheduling…"
-            }
-            Text(next, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // The time of the next teaching is deliberately never shown: it should be a surprise.
+        if (settings?.notificationsEnabled == false) {
+            Text(
+                "Daily notifications are off.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         Spacer(Modifier.height(8.dp))

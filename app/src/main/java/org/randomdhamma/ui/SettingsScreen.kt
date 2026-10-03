@@ -120,13 +120,6 @@ fun SettingsScreen(snackbar: SnackbarHostState) {
                 )
             }) { Text("Open notification settings") }
         }
-        if (s.notificationsEnabled && s.nextFireAt > 0) {
-            Text(
-                "Next: ${formatDateTime(s.nextFireAt)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
 
         HorizontalDivider()
         Text("Time window", style = MaterialTheme.typography.titleMedium)

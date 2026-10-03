@@ -39,7 +39,7 @@ Single-module app with package `org.randomdhamma` (name can change).
 | notify | `Notifications.kt` | Notification channel and builder. Tapping it deep-links into the reader or player. |
 | playback | `PlaybackService.kt` | `MediaSessionService` with ExoPlayer. Calls `setPlaybackSpeed(settings.defaultSpeed)` every time an item loads. Provides lock-screen and notification controls. |
 | ui | `MainActivity.kt`, `nav/AppNav.kt` | Navigation and the deep-link routes `sutta?url=` and `talk?url=&title=`. |
-| ui | `HomeScreen.kt` | Shows today's pick, the "Give me one now" button and the next scheduled time. |
+| ui | `HomeScreen.kt` | Shows today's pick and the "Give me one now" button. The next scheduled time is never shown, so it stays a surprise. |
 | ui | `SuttaScreen.kt` | WebView loading the sutta URL. JavaScript on, and links stay inside the app. Adds a "Next random sutta" action. |
 | ui | `PlayerScreen.kt` | Media3 controller UI: play/pause, ±10 s seek, and speed chips (0.5/0.75/1.0/1.25/1.5). |
 | ui | `HistoryScreen.kt`, `SettingsScreen.kt` | History lists past picks and reopens them. Settings holds the time window, ratio, speed, a test-notification button and an exact-alarm permission hint. |
