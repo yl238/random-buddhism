@@ -1,3 +1,4 @@
 <resources>
-    <color name="ic_launcher_background">#4F7D64</color>
+    <!-- Google green: bright like the system icons, and white on it is 3.06:1 (WCAG 3:1 for graphics). -->
+    <color name="ic_launcher_background">#34A853</color>
 </resources>
