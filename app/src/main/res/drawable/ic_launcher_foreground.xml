@@ -10,10 +10,10 @@
         android:translateY="18"
         android:scaleX="0.0703125"
         android:scaleY="0.0703125">
-        <path android:fillColor="#FF698D6F" android:pathData="M512,200 A300,300 0 1,1 511.9,200 Z" />
-        <path android:strokeColor="#FFF3E3A6" android:strokeWidth="16" android:strokeLineCap="round" android:pathData="M512,715 L512,852" />
-        <path android:fillColor="#FFF3E3A6" android:pathData="M512,150 C506,200 500,245 490,262 C470,290 420,340 370,395 C320,450 282,500 280,570 C278,650 340,720 430,728 C470,732 500,726 512,722 C524,726 554,732 594,728 C684,720 746,650 744,570 C742,500 704,450 654,395 C604,340 554,290 534,262 C524,245 518,200 512,150 Z" />
-        <path android:strokeColor="#FF4F7D64" android:strokeWidth="12" android:strokeLineCap="round" android:pathData="M512,215 L512,715" />
-        <path android:strokeColor="#FF4F7D64" android:strokeWidth="10" android:strokeLineCap="round" android:pathData="M512,455 Q460,420 430,368 M512,455 Q564,420 594,368 M512,545 Q430,505 380,448 M512,545 Q594,505 644,448 M512,635 Q420,610 350,558 M512,635 Q604,610 675,558" />
+        <path android:fillColor="#FF61886C" android:pathData="M512,200 A300,300 0 1,1 511.9,200 Z" />
+        <path android:strokeColor="#FFF6EABC" android:strokeWidth="16" android:strokeLineCap="round" android:pathData="M512,715 L512,852" />
+        <path android:fillColor="#FFF6EABC" android:pathData="M512,150 C506,200 500,245 490,262 C470,290 420,340 370,395 C320,450 282,500 280,570 C278,650 340,720 430,728 C470,732 500,726 512,722 C524,726 554,732 594,728 C684,720 746,650 744,570 C742,500 704,450 654,395 C604,340 554,290 534,262 C524,245 518,200 512,150 Z" />
+        <path android:strokeColor="#FF4F7D64" android:strokeWidth="16" android:strokeLineCap="round" android:pathData="M512,215 L512,715" />
+        <path android:strokeColor="#FF4F7D64" android:strokeWidth="14" android:strokeLineCap="round" android:pathData="M512,455 Q460,420 430,368 M512,455 Q564,420 594,368 M512,545 Q430,505 380,448 M512,545 Q594,505 644,448 M512,635 Q420,610 350,558 M512,635 Q604,610 675,558" />
     </group>
 </vector>
