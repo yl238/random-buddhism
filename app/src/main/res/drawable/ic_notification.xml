@@ -1,10 +1,16 @@
-<!-- Simple lotus-like mark, monochrome for the status bar. -->
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bodhi leaf silhouette, monochrome for the status bar. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M12,3C10.2,5.2 9.5,7.6 9.9,10.1C8.1,9 6,8.5 3.5,8.6C3.9,12.6 6.6,15.7 10.4,16.6L10.4,19L7,19L7,21L17,21L17,19L13.6,19L13.6,16.6C17.4,15.7 20.1,12.6 20.5,8.6C18,8.5 15.9,9 14.1,10.1C14.5,7.6 13.8,5.2 12,3Z" />
+    <group
+        android:translateX="-4.046"
+        android:translateY="-3.701"
+        android:scaleX="0.03134"
+        android:scaleY="0.03134">
+        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="24" android:strokeLineCap="round" android:pathData="M512,715 L512,852" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M512,150 C506,200 500,245 490,262 C470,290 420,340 370,395 C320,450 282,500 280,570 C278,650 340,720 430,728 C470,732 500,726 512,722 C524,726 554,732 594,728 C684,720 746,650 744,570 C742,500 704,450 654,395 C604,340 554,290 534,262 C524,245 518,200 512,150 Z" />
+    </group>
 </vector>

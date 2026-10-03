@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bodhi leaf silhouette for Android's themed (monochrome) icons. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="18"
+        android:translateY="18"
+        android:scaleX="0.0703125"
+        android:scaleY="0.0703125">
+        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="16" android:strokeLineCap="round" android:pathData="M512,715 L512,852" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M512,150 C506,200 500,245 490,262 C470,290 420,340 370,395 C320,450 282,500 280,570 C278,650 340,720 430,728 C470,732 500,726 512,722 C524,726 554,732 594,728 C684,720 746,650 744,570 C742,500 704,450 654,395 C604,340 554,290 534,262 C524,245 518,200 512,150 Z" />
+    </group>
+</vector>
