@@ -3,7 +3,7 @@
 > **Status (2026-10-03): built, and installed on the Pixel 7.** This plan has been updated to describe the app as it is now. "Changes since the original plan" below records what changed during development and why.
 
 ## Context
-`Project_spec.md` asks for an Android app (Pixel 7) that sends a notification **once a day at a random time between 07:00 and 22:00**. The notification offers either a random sutta from dhammatalks.org/suttas or a random morning talk from dhammatalks.org/audio/morning, and talks play at **0.75× by default**.
+The original spec (no longer kept in the repo) asked for an Android app (Pixel 7) that sends a notification **once a day at a random time between 07:00 and 22:00**. The notification offers either a random sutta from dhammatalks.org/suttas or a random morning talk from dhammatalks.org/audio/morning, and talks play at **0.75× by default**.
 
 **Decisions from Q&A**
 - Each day a coin flip picks a sutta or a talk (the ratio can be changed in Settings).
