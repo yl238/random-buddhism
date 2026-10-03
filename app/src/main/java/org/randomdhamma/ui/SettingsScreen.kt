@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -47,8 +46,6 @@ import org.randomdhamma.appContainer
 import org.randomdhamma.notify.Notifications
 import org.randomdhamma.schedule.DailyPickWorker
 
-private val SPEED_OPTIONS = listOf(0.5f, 0.75f, 1.0f, 1.25f)
-
 @Composable
 fun SettingsScreen(snackbar: SnackbarHostState) {
     val context = LocalContext.current
@@ -58,11 +55,11 @@ fun SettingsScreen(snackbar: SnackbarHostState) {
     val s = settings ?: return
 
     // Re-check system permissions whenever we come back from system settings.
-    var exactGranted by remember { mutableIntStateOf(0) }
-    var notificationsAllowed by remember { mutableIntStateOf(0) }
+    var exactGranted by remember { mutableStateOf(container.scheduler.canScheduleExact()) }
+    var notificationsAllowed by remember { mutableStateOf(Notifications.canPost(context)) }
     LifecycleResumeEffect(Unit) {
-        exactGranted = if (container.scheduler.canScheduleExact()) 1 else 0
-        notificationsAllowed = if (Notifications.canPost(context)) 1 else 0
+        exactGranted = container.scheduler.canScheduleExact()
+        notificationsAllowed = Notifications.canPost(context)
         if (s.notificationsEnabled) scope.launch { container.scheduler.ensureScheduled() }
         onPauseOrDispose { }
     }
@@ -107,7 +104,7 @@ fun SettingsScreen(snackbar: SnackbarHostState) {
                 if (on) container.scheduler.reschedule() else container.scheduler.cancel()
             }
         }
-        if (notificationsAllowed == 0) {
+        if (!notificationsAllowed) {
             Text(
                 "Notifications are blocked for this app.",
                 color = MaterialTheme.colorScheme.error,
@@ -141,11 +138,11 @@ fun SettingsScreen(snackbar: SnackbarHostState) {
         HorizontalDivider()
         Text("Default talk speed", style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SPEED_OPTIONS.forEach { option ->
+            TALK_SPEEDS.forEach { option ->
                 FilterChip(
-                    selected = kotlin.math.abs(s.defaultSpeed - option) < 0.01f,
+                    selected = isSameSpeed(s.defaultSpeed, option),
                     onClick = { scope.launch { container.settings.setDefaultSpeed(option) } },
-                    label = { Text("${option}×".replace(".0×", "×")) },
+                    label = { Text(formatSpeed(option)) },
                 )
             }
         }
@@ -166,7 +163,7 @@ fun SettingsScreen(snackbar: SnackbarHostState) {
                 )
             }
         }
-        if (s.useExactAlarms && exactGranted == 0) {
+        if (s.useExactAlarms && !exactGranted) {
             Text(
                 "Permission not granted, so the notification may arrive up to an hour after the scheduled time.",
                 style = MaterialTheme.typography.bodySmall,

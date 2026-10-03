@@ -14,7 +14,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (savedInstanceState == null) pendingIntent.value = intent
+        // Reopening from Recents redelivers the original (e.g. notification) intent; don't replay it.
+        val launchedFromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        if (savedInstanceState == null && !launchedFromHistory) pendingIntent.value = intent
         setContent {
             RandomDhammaTheme {
                 AppNav(

@@ -34,11 +34,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.net.toUri
 import kotlinx.coroutines.launch
 import org.randomdhamma.appContainer
 import org.randomdhamma.data.ContentType
 import org.randomdhamma.data.PickSource
+import org.randomdhamma.util.suspendRunCatching
 
 private const val SITE_HOST = "dhammatalks.org"
 
@@ -70,7 +70,7 @@ fun SuttaScreen(initialUrl: String, onBack: () -> Unit) {
                 actions = {
                     IconButton(onClick = {
                         scope.launch {
-                            runCatching { container.content.pick(PickSource.MANUAL, ContentType.SUTTA) }
+                            suspendRunCatching { container.content.pick(PickSource.MANUAL, ContentType.SUTTA) }
                                 .onSuccess { webView?.loadUrl(it.url) }
                                 .onFailure { snackbar.showSnackbar("Couldn't fetch a random sutta.") }
                         }
@@ -108,7 +108,7 @@ fun SuttaScreen(initialUrl: String, onBack: () -> Unit) {
                                 canGoBack = view.canGoBack()
                             }
                         }
-                        loadUrl(initialUrl.toUri().toString())
+                        loadUrl(initialUrl)
                         webView = this
                     }
                 },

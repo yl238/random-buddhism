@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +43,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -49,8 +53,6 @@ import kotlinx.coroutines.delay
 import org.randomdhamma.appContainer
 import org.randomdhamma.playback.PlaybackService
 import org.randomdhamma.playback.playTalk
-
-private val SPEEDS = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f)
 
 /**
  * Plays [url] through [PlaybackService]. With a null [url] it just attaches to whatever is playing
@@ -76,11 +78,16 @@ fun PlayerScreen(url: String?, title: String?, onBack: () -> Unit) {
         }
     }
 
-    // Start the requested talk at the default speed (0.75× unless changed in Settings).
+    // Start the requested talk at the default speed (0.75× unless changed in Settings), once per
+    // back-stack entry: coming back to this screen later must not replace whatever is playing now.
+    var started by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(controller, url) {
         val c = controller ?: return@LaunchedEffect
-        if (url == null || c.currentMediaItem?.mediaId == url) return@LaunchedEffect
-        c.playTalk(url, title, container.settings.current().defaultSpeed)
+        if (url == null || started) return@LaunchedEffect
+        if (c.currentMediaItem?.mediaId != url) {
+            c.playTalk(url, title, container.settings.current().defaultSpeed)
+        }
+        started = true
     }
 
     var isPlaying by remember { mutableStateOf(false) }
@@ -92,17 +99,21 @@ fun PlayerScreen(url: String?, title: String?, onBack: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var dragging by remember { mutableStateOf<Float?>(null) }
 
-    LaunchedEffect(controller) {
+    // Poll for the progress bar only while the screen is visible, not while backgrounded.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(controller, lifecycleOwner) {
         val c = controller ?: return@LaunchedEffect
-        while (true) {
-            isPlaying = c.isPlaying
-            buffering = c.playbackState == Player.STATE_BUFFERING
-            position = c.currentPosition
-            duration = c.duration.coerceAtLeast(0L)
-            speed = c.playbackParameters.speed
-            currentTitle = c.mediaMetadata.title?.toString() ?: currentTitle
-            error = c.playerError?.let { "Playback failed. Check your connection." }
-            delay(500)
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                isPlaying = c.isPlaying
+                buffering = c.playbackState == Player.STATE_BUFFERING
+                position = c.currentPosition
+                duration = c.duration.coerceAtLeast(0L)
+                speed = c.playbackParameters.speed
+                currentTitle = c.mediaMetadata.title?.toString() ?: currentTitle
+                error = c.playerError?.let { "Playback failed. Check your connection." }
+                delay(500)
+            }
         }
     }
 
@@ -171,11 +182,11 @@ fun PlayerScreen(url: String?, title: String?, onBack: () -> Unit) {
 
             Text("Speed", style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SPEEDS.forEach { s ->
+                TALK_SPEEDS.forEach { s ->
                     FilterChip(
-                        selected = kotlin.math.abs(speed - s) < 0.01f,
+                        selected = isSameSpeed(speed, s),
                         onClick = { c?.setPlaybackSpeed(s); speed = s },
-                        label = { Text("${s}×".replace(".0×", "×")) },
+                        label = { Text(formatSpeed(s)) },
                         enabled = c != null,
                     )
                 }

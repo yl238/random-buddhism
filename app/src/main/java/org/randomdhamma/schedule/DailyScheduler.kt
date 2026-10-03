@@ -6,9 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import org.randomdhamma.data.SettingsRepository
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class DailyScheduler(
@@ -17,12 +15,20 @@ class DailyScheduler(
 ) {
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
 
-    /** Re-arms the stored time if it is still ahead (e.g. after a reboot); otherwise picks a new one. */
-    suspend fun ensureScheduled() {
+    /** Makes sure an alarm is armed, keeping the stored time where possible (app start, app update). */
+    suspend fun ensureScheduled() = rearm(alarmsCleared = false)
+
+    /** After a reboot every alarm is gone, so a stored time that has passed is treated as missed. */
+    suspend fun onBoot() = rearm(alarmsCleared = true)
+
+    private suspend fun rearm(alarmsCleared: Boolean) {
         val s = settings.current()
-        if (!s.notificationsEnabled) return cancel()
-        if (s.nextFireAt > System.currentTimeMillis()) setAlarm(s.nextFireAt, s.useExactAlarms)
-        else reschedule()
+        when (rearmAction(s.notificationsEnabled, s.nextFireAt, System.currentTimeMillis(), alarmsCleared)) {
+            RearmAction.CANCEL -> cancel()
+            RearmAction.REARM -> setAlarm(s.nextFireAt, s.useExactAlarms)
+            RearmAction.RESCHEDULE -> reschedule()
+            RearmAction.LEAVE -> Unit
+        }
     }
 
     /** Picks a fresh random time, e.g. after the window changed. */
@@ -66,7 +72,7 @@ class DailyScheduler(
         if (exact && canScheduleExact()) {
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
         } else {
-            // Inexact: may be a few minutes late in Doze, which is fine for a random time.
+            // Inexact: may be up to an hour late, which reschedule() allows for with INEXACT_SLACK_MINUTES.
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
         }
     }
@@ -84,8 +90,5 @@ class DailyScheduler(
 
         /** Inexact alarms get a delivery window of up to an hour (seen as `window=+1h` in dumpsys alarm). */
         private const val INEXACT_SLACK_MINUTES = 60
-
-        fun describe(millis: Long): ZonedDateTime =
-            Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
     }
 }

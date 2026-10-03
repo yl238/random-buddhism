@@ -6,11 +6,13 @@ import kotlinx.coroutines.CancellationException
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -75,17 +77,30 @@ class TalkCacheWorker(context: Context, params: WorkerParameters) : CoroutineWor
     override suspend fun doWork(): Result = try {
         applicationContext.appContainer.content.refreshTalkCache()
         Result.success()
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
+        Log.w(TAG, "Talk cache refresh failed (attempt ${runAttemptCount + 1})", e)
         if (runAttemptCount < 5) Result.retry() else Result.failure()
     }
 
     companion object {
+        private const val TAG = "TalkCacheWorker"
+
+        /**
+         * Runs once straight away, then weekly to pick up new talks. KEEP means calling this on
+         * every app start doesn't re-run it or refetch the index.
+         */
         fun enqueue(context: Context) {
-            val request = OneTimeWorkRequestBuilder<TalkCacheWorker>()
+            val request = PeriodicWorkRequestBuilder<TalkCacheWorker>(7, TimeUnit.DAYS)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
                 .build()
-            WorkManager.getInstance(context).enqueueUniqueWork("talk-cache", ExistingWorkPolicy.KEEP, request)
+            WorkManager.getInstance(context)
+                .enqueueUniquePeriodicWork(UNIQUE_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
         }
+
+        // A new name, so the one-time "talk-cache" work from earlier builds doesn't clash.
+        private const val UNIQUE_NAME = "talk-cache-weekly"
     }
 }

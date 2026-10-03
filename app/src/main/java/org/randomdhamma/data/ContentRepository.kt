@@ -1,5 +1,6 @@
 package org.randomdhamma.data
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import org.randomdhamma.data.local.HistoryDao
 import org.randomdhamma.data.local.HistoryEntity
@@ -7,7 +8,26 @@ import org.randomdhamma.data.local.TalkDao
 import org.randomdhamma.data.local.TalkEntity
 import org.randomdhamma.data.remote.DhammaTalksClient
 import java.io.IOException
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlin.random.Random
+
+private const val TALK_LIST_MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000
+
+/** Talks for a year can still be added for about a week after it ends (late uploads). */
+private const val YEAR_END_GRACE_DAYS = 7L
+
+/**
+ * A year's cached talk list may be incomplete if it was fetched before the year was over
+ * (plus a grace period). Such a list is refreshed once it is a week old. A list fetched after
+ * the year ended never changes. Unlike "is this the latest year", this still catches up the
+ * old year once the site starts listing a new one.
+ */
+fun isTalkListStale(year: Int, fetchedAt: Long, now: Long, zone: ZoneId = ZoneId.systemDefault()): Boolean {
+    val complete = LocalDate.of(year + 1, 1, 1).plusDays(YEAR_END_GRACE_DAYS)
+        .atStartOfDay(zone).toInstant().toEpochMilli()
+    return fetchedAt < complete && now - fetchedAt > TALK_LIST_MAX_AGE_MS
+}
 
 /** Weighted coin flip: [suttaPercent] chance of a sutta, otherwise a talk. */
 fun chooseType(suttaPercent: Int, random: Random = Random.Default): ContentType =
@@ -60,7 +80,7 @@ class ContentRepository(
         if (years.isEmpty()) throw IOException("No talk years found")
         val latest = years.max()
         val year = years.random()
-        val cached = talkDao.fetchedYear(year)?.takeIf { !isStale(year, latest, it.fetchedAt) }
+        val cached = talkDao.fetchedYear(year)?.takeIf { !isTalkListStale(year, it.fetchedAt, clock()) }
         if (cached == null) cacheYear(year, latest)
         return talkDao.randomTalkInYear(year)?.toPick() ?: throw IOException("No talks found for $year")
     }
@@ -73,9 +93,9 @@ class ContentRepository(
         val fetched = talkDao.fetchedYears().associate { it.year to it.fetchedAt }
         for (year in years) {
             val fetchedAt = fetched[year]
-            if (fetchedAt == null || isStale(year, latest, fetchedAt)) {
+            if (fetchedAt == null || isTalkListStale(year, fetchedAt, clock())) {
                 cacheYear(year, latest)
-                kotlinx.coroutines.delay(POLITE_DELAY_MS)
+                delay(POLITE_DELAY_MS)
             }
         }
         settings.setTalkCacheComplete(true)
@@ -87,14 +107,9 @@ class ContentRepository(
         talkDao.replaceYear(year, talks.map { TalkEntity(it.mp3Url, it.year, it.title) }, clock())
     }
 
-    /** Past years never change; the current year gains a talk a day, so refresh it weekly. */
-    private fun isStale(year: Int, latest: Int, fetchedAt: Long): Boolean =
-        year >= latest && clock() - fetchedAt > CURRENT_YEAR_MAX_AGE_MS
-
     private fun TalkEntity.toPick() = Pick(ContentType.TALK, mp3Url, title)
 
     companion object {
-        private const val CURRENT_YEAR_MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000
         private const val POLITE_DELAY_MS = 500L
     }
 }

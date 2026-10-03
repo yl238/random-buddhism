@@ -1,12 +1,15 @@
 package org.randomdhamma.playback
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import androidx.core.app.ServiceCompat
 import androidx.media3.common.AudioAttributes
+import androidx.annotation.OptIn
 import androidx.media3.common.C
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
@@ -56,6 +59,10 @@ class PlaybackService : MediaSessionService() {
      * Handles the Play button on a talk notification. It starts playback here rather than in an
      * activity, so it works from the lock screen without unlocking.
      */
+    // DEFAULT_NOTIFICATION_ID is marked unstable; we only use it to share Media3's notification id.
+    // ServiceCompat drops the foreground service type below API 29, so the constant is safe there.
+    @OptIn(UnstableApi::class)
+    @SuppressLint("InlinedApi")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_PLAY_TALK) {
             val url = intent.getStringExtra(EXTRA_URL)

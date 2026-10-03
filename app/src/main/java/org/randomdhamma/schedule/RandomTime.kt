@@ -23,16 +23,16 @@ fun nextFireTime(
 ): ZonedDateTime {
     require(startMinute in 0 until endMinute && endMinute <= 24 * 60) { "Invalid window $startMinute..$endMinute" }
     // Never shrink the window to nothing: very short windows just accept a possibly late delivery.
-    val endMinute = maxOf(startMinute + 1, endMinute - deliverySlackMinutes)
+    val latestMinute = maxOf(startMinute + 1, endMinute - deliverySlackMinutes)
     val today = now.toLocalDate()
     val nowMinute = now.hour * 60 + now.minute
     val earliestToday = maxOf(startMinute, nowMinute + 1)
-    val (day, lo) = if (lastFiredEpochDay != today.toEpochDay() && earliestToday < endMinute) {
+    val (day, lo) = if (lastFiredEpochDay != today.toEpochDay() && earliestToday < latestMinute) {
         today to earliestToday
     } else {
         today.plusDays(1) to startMinute
     }
-    val minute = lo + random.nextInt(endMinute - lo)
+    val minute = lo + random.nextInt(latestMinute - lo)
     return at(day, minute, random.nextInt(60), now)
 }
 

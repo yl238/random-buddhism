@@ -3,12 +3,10 @@ package org.randomdhamma.debug
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.randomdhamma.appContainer
 import org.randomdhamma.data.ContentType
 import org.randomdhamma.schedule.DailyPickWorker
+import org.randomdhamma.schedule.runAsync
 
 /**
  * Debug builds only.
@@ -26,23 +24,19 @@ import org.randomdhamma.schedule.DailyPickWorker
 class DebugTriggerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_TEST_NOTIFY) {
-            val type = intent.getStringExtra("type")?.uppercase()?.let { runCatching { ContentType.valueOf(it) }.getOrNull() }
+            val raw = intent.getStringExtra("type")
+            val type = ContentType.entries.firstOrNull { it.name.equals(raw, ignoreCase = true) }
             DailyPickWorker.enqueue(context, test = true, type = type)
             return
         }
         val scheduler = context.appContainer.scheduler
-        val pending = goAsync()
-        CoroutineScope(Dispatchers.Default).launch {
-            try {
-                when (intent.action) {
-                    ACTION_REROLL -> scheduler.reschedule()
-                    else -> {
-                        val seconds = intent.getIntExtra("seconds", 20).coerceAtLeast(1)
-                        scheduler.scheduleAt(System.currentTimeMillis() + seconds * 1000L)
-                    }
+        runAsync {
+            when (intent.action) {
+                ACTION_REROLL -> scheduler.reschedule()
+                else -> {
+                    val seconds = intent.getIntExtra("seconds", 20).coerceAtLeast(1)
+                    scheduler.scheduleAt(System.currentTimeMillis() + seconds * 1000L)
                 }
-            } finally {
-                pending.finish()
             }
         }
     }

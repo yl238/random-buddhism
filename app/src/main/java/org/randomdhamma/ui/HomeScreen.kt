@@ -43,6 +43,10 @@ import org.randomdhamma.data.ContentType
 import org.randomdhamma.data.Pick
 import org.randomdhamma.data.PickSource
 import org.randomdhamma.data.local.HistoryEntity
+import org.randomdhamma.util.suspendRunCatching
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 @Composable
 fun HomeScreen(onOpen: (Pick) -> Unit, snackbar: SnackbarHostState) {
@@ -56,7 +60,7 @@ fun HomeScreen(onOpen: (Pick) -> Unit, snackbar: SnackbarHostState) {
         if (loading) return
         loading = true
         scope.launch {
-            runCatching { container.content.pick(PickSource.MANUAL, type) }
+            suspendRunCatching { container.content.pick(PickSource.MANUAL, type) }
                 .onSuccess(onOpen)
                 .onFailure { snackbar.showSnackbar("Couldn't reach dhammatalks.org. Check your connection.") }
             loading = false
@@ -145,5 +149,4 @@ fun PickCard(entry: HistoryEntity, onClick: () -> Unit, modifier: Modifier = Mod
 fun HistoryEntity.toPick() = Pick(ContentType.valueOf(type), url, title)
 
 private fun isToday(millis: Long): Boolean =
-    java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault()).toLocalDate() ==
-        java.time.LocalDate.now()
+    Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate() == LocalDate.now()

@@ -37,11 +37,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.randomdhamma.appContainer
 import org.randomdhamma.data.ContentType
 import org.randomdhamma.data.Pick
 import org.randomdhamma.data.PickSource
+import org.randomdhamma.util.suspendRunCatching
 
 private object Routes {
     const val HOME = "home"
@@ -81,6 +83,9 @@ fun AppNav(pendingIntent: Intent?, onIntentHandled: () -> Unit) {
     // Deep links from notifications / the media session.
     LaunchedEffect(pendingIntent) {
         val intent = pendingIntent ?: return@LaunchedEffect
+        // On a cold start this can run before NavHost (inside the Scaffold) has set the graph;
+        // navigating then would crash. The flow only emits once the graph has a destination.
+        nav.currentBackStackEntryFlow.first()
         val url = intent.getStringExtra(NavIntents.EXTRA_URL)
         val title = intent.getStringExtra(NavIntents.EXTRA_TITLE)
         when (intent.getStringExtra(NavIntents.EXTRA_TARGET)) {
@@ -88,7 +93,7 @@ fun AppNav(pendingIntent: Intent?, onIntentHandled: () -> Unit) {
             NavIntents.TARGET_TALK -> url?.let { nav.navigate(Routes.talk(it, title)) }
             NavIntents.TARGET_PLAYER -> nav.navigate(Routes.talk(null, null))
             NavIntents.TARGET_RESOLVE -> scope.launch {
-                runCatching { container.content.pick(PickSource.DAILY) }
+                suspendRunCatching { container.content.pick(PickSource.DAILY) }
                     .onSuccess { nav.openPick(it) }
                     .onFailure { snackbar.showSnackbar("Couldn't reach dhammatalks.org. Check your connection.") }
             }

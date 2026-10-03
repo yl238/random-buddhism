@@ -6,12 +6,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.media.app.NotificationCompat.MediaStyle
 import org.randomdhamma.R
 import org.randomdhamma.data.ContentType
 import org.randomdhamma.data.Pick
@@ -74,7 +74,7 @@ object Notifications {
         context: Context,
         title: String,
         text: String,
-        intent: android.content.Intent,
+        intent: Intent,
         action: NotificationCompat.Action? = null,
     ) {
         if (!canPost(context)) return
@@ -88,8 +88,7 @@ object Notifications {
             .setContentText(text)
             .setStyle(
                 if (action != null) {
-                    // Media style draws the action as a compact ▶ icon in the collapsed row.
-                    MediaStyle().setShowActionsInCompactView(0)
+                    compactActionStyle()
                 } else {
                     NotificationCompat.BigTextStyle().bigText(text)
                 }
@@ -123,4 +122,13 @@ object Notifications {
             .setContentTitle("Finding today's teaching…")
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .build()
+
+    /**
+     * Media style draws the action as a compact ▶ icon in the collapsed row. androidx.media's
+     * MediaStyle is deprecated in favour of Media3's MediaStyleNotificationHelper, but that one
+     * needs a live MediaSession, which the daily-pick worker doesn't have.
+     */
+    @Suppress("DEPRECATION")
+    private fun compactActionStyle() =
+        androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(0)
 }
