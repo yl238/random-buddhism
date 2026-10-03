@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Random Dhamma</string>
+    <string name="channel_daily_name">Daily teaching</string>
+    <string name="channel_daily_description">One random sutta or Dhamma talk each day</string>
+</resources>
