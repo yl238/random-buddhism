@@ -10,6 +10,7 @@
             <intent-filter>
                 <action android:name="org.randomdhamma.debug.FIRE_IN" />
                 <action android:name="org.randomdhamma.debug.REROLL" />
+                <action android:name="org.randomdhamma.debug.TEST_NOTIFY" />
             </intent-filter>
         </receiver>
     </application>

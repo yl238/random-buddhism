@@ -7,6 +7,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.randomdhamma.appContainer
+import org.randomdhamma.data.ContentType
+import org.randomdhamma.schedule.DailyPickWorker
 
 /**
  * Debug builds only.
@@ -14,11 +16,20 @@ import org.randomdhamma.appContainer
  * Arm the real daily alarm N seconds from now:
  *   adb shell am broadcast -a org.randomdhamma.debug.FIRE_IN --ei seconds 20 -n org.randomdhamma/.debug.DebugTriggerReceiver
  *
+ * Send a test notification now (same as Settings → Send test notification; today's time is untouched):
+ *   adb shell am broadcast -a org.randomdhamma.debug.TEST_NOTIFY -n org.randomdhamma/.debug.DebugTriggerReceiver
+ * Add `--es type TALK` or `--es type SUTTA` to force one kind.
+ *
  * Pick a fresh random time (without revealing it):
  *   adb shell am broadcast -a org.randomdhamma.debug.REROLL -n org.randomdhamma/.debug.DebugTriggerReceiver
  */
 class DebugTriggerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == ACTION_TEST_NOTIFY) {
+            val type = intent.getStringExtra("type")?.uppercase()?.let { runCatching { ContentType.valueOf(it) }.getOrNull() }
+            DailyPickWorker.enqueue(context, test = true, type = type)
+            return
+        }
         val scheduler = context.appContainer.scheduler
         val pending = goAsync()
         CoroutineScope(Dispatchers.Default).launch {
@@ -38,5 +49,6 @@ class DebugTriggerReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_REROLL = "org.randomdhamma.debug.REROLL"
+        const val ACTION_TEST_NOTIFY = "org.randomdhamma.debug.TEST_NOTIFY"
     }
 }

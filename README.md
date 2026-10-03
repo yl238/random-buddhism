@@ -3,7 +3,7 @@
 An Android app (built for the Pixel 7) that sends one notification a day, at a random time between 07:00 and 22:00. It offers either:
 
 - a random sutta from [dhammatalks.org/suttas](https://www.dhammatalks.org/suttas/), which opens in an in-app reader, or
-- a random short morning talk from [dhammatalks.org/audio/morning](https://www.dhammatalks.org/audio/morning/), which plays at **0.75×** by default with background playback and lock-screen controls.
+- a random short morning talk from [dhammatalks.org/audio/morning](https://www.dhammatalks.org/audio/morning/), which plays at **0.75×** by default with background playback and lock-screen controls. A talk notification has a ▶ button, so you can start listening from the lock screen without unlocking.
 
 The app never shows when the next teaching is due, so each one is a surprise.
 
@@ -36,6 +36,11 @@ The unit tests cover:
   adb shell am broadcast -a org.randomdhamma.debug.FIRE_IN --ei seconds 20 \
       -n org.randomdhamma/.debug.DebugTriggerReceiver
   ```
+- **Test notification from adb (debug builds only):** works with the screen locked and doesn't change today's time. Add `--es type TALK` (or `SUTTA`) to choose the kind.
+  ```sh
+  adb shell am broadcast -a org.randomdhamma.debug.TEST_NOTIFY \
+      -n org.randomdhamma/.debug.DebugTriggerReceiver
+  ```
 - **Re-roll today's time (debug builds only):** pick a fresh random time without showing it.
   ```sh
   adb shell am broadcast -a org.randomdhamma.debug.REROLL \
@@ -57,4 +62,5 @@ The unit tests cover:
 - **Random talk:** each year page (`/audio/morning/<year>/`) lists that year's MP3s. The current year is listed on `/audio/morning/` itself.
   - The app caches every year's list in Room so it can pick uniformly across all talks.
   - Until the cache is complete, it picks a random year and then a random talk from that year.
+- **Lock-screen playback:** the ▶ button on a talk notification starts the playback service directly instead of opening the app, because opening an app requires unlocking. The service becomes a foreground service before it calls `play()`, because Android 16+ ignores audio requests from background apps.
 - **Scheduling:** `AlarmManager.setAndAllowWhileIdle` fires once a day. The alarm hands the network work to WorkManager, which retries and falls back to a "tap for today's teaching" notification when offline. Alarms are re-armed after a reboot or a time zone change.

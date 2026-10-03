@@ -42,14 +42,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import kotlinx.coroutines.delay
 import org.randomdhamma.appContainer
 import org.randomdhamma.playback.PlaybackService
+import org.randomdhamma.playback.playTalk
 
 private val SPEEDS = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f)
 
@@ -81,21 +80,7 @@ fun PlayerScreen(url: String?, title: String?, onBack: () -> Unit) {
     LaunchedEffect(controller, url) {
         val c = controller ?: return@LaunchedEffect
         if (url == null || c.currentMediaItem?.mediaId == url) return@LaunchedEffect
-        val item = MediaItem.Builder()
-            .setMediaId(url)
-            .setUri(url)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(title ?: "Morning talk")
-                    .setArtist("Ṭhānissaro Bhikkhu")
-                    .setAlbumTitle("Short morning talks")
-                    .build()
-            )
-            .build()
-        c.setMediaItem(item)
-        c.setPlaybackSpeed(container.settings.current().defaultSpeed)
-        c.prepare()
-        c.play()
+        c.playTalk(url, title, container.settings.current().defaultSpeed)
     }
 
     var isPlaying by remember { mutableStateOf(false) }

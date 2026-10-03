@@ -11,15 +11,18 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.media.app.NotificationCompat.MediaStyle
 import org.randomdhamma.R
 import org.randomdhamma.data.ContentType
 import org.randomdhamma.data.Pick
+import org.randomdhamma.playback.PlaybackService
 import org.randomdhamma.ui.NavIntents
 
 object Notifications {
     private const val CHANNEL_DAILY = "daily"
     private const val CHANNEL_BACKGROUND = "background"
     private const val DAILY_ID = 100
+    private const val PLAY_REQUEST_CODE = 102
     const val WORKING_ID = 101
 
     fun createChannels(context: Context) {
@@ -47,14 +50,33 @@ object Notifications {
             ContentType.SUTTA -> "Today's sutta"
             ContentType.TALK -> "Today's Dhamma talk"
         }
-        post(context, heading, pick.title, NavIntents.forPick(context, pick))
+        val playAction = if (pick.type == ContentType.TALK) {
+            // A service PendingIntent (unlike an activity) runs from the lock screen without unlocking.
+            val playIntent = PendingIntent.getForegroundService(
+                context, PLAY_REQUEST_CODE,
+                PlaybackService.playTalkIntent(context, pick.url, pick.title),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            NotificationCompat.Action(R.drawable.ic_play, "Play talk", playIntent)
+        } else {
+            null
+        }
+        post(context, heading, pick.title, NavIntents.forPick(context, pick), playAction)
     }
 
     fun showFallback(context: Context) {
         post(context, "Today's teaching", "Tap for today's random teaching", NavIntents.resolve(context))
     }
 
-    private fun post(context: Context, title: String, text: String, intent: android.content.Intent) {
+    fun cancelDaily(context: Context) = NotificationManagerCompat.from(context).cancel(DAILY_ID)
+
+    private fun post(
+        context: Context,
+        title: String,
+        text: String,
+        intent: android.content.Intent,
+        action: NotificationCompat.Action? = null,
+    ) {
         if (!canPost(context)) return
         val pi = PendingIntent.getActivity(
             context, DAILY_ID, intent,
@@ -64,10 +86,20 @@ object Notifications {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setStyle(
+                if (action != null) {
+                    // Media style draws the action as a compact ▶ icon in the collapsed row.
+                    MediaStyle().setShowActionsInCompactView(0)
+                } else {
+                    NotificationCompat.BigTextStyle().bigText(text)
+                }
+            )
             .setContentIntent(pi)
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION)
+            // A teaching's title isn't sensitive; show it (and the Play button) on the lock screen.
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .apply { action?.let(::addAction) }
             .build()
         try {
             NotificationManagerCompat.from(context).notify(DAILY_ID, notification)
@@ -75,6 +107,15 @@ object Notifications {
             // Permission revoked between the check and the post.
         }
     }
+
+    /** Shown for a moment while a talk started from the lock screen begins playing. */
+    fun startingPlaybackNotification(context: Context, title: String?): Notification =
+        NotificationCompat.Builder(context, CHANNEL_BACKGROUND)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title ?: "Morning talk")
+            .setContentText("Starting…")
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
 
     fun workingNotification(context: Context): Notification =
         NotificationCompat.Builder(context, CHANNEL_BACKGROUND)

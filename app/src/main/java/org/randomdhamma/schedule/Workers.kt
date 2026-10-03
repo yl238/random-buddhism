@@ -1,6 +1,8 @@
 package org.randomdhamma.schedule
 
 import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.CancellationException
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -13,6 +15,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import org.randomdhamma.appContainer
+import org.randomdhamma.data.ContentType
 import org.randomdhamma.data.PickSource
 import org.randomdhamma.notify.Notifications
 import java.util.concurrent.TimeUnit
@@ -25,10 +28,14 @@ class DailyPickWorker(context: Context, params: WorkerParameters) : CoroutineWor
         val isTest = inputData.getBoolean(KEY_TEST, false)
         if (!isTest && !container.settings.current().notificationsEnabled) return Result.success()
         return try {
-            val pick = container.content.pick(if (isTest) PickSource.MANUAL else PickSource.DAILY)
+            val type = inputData.getString(KEY_TYPE)?.let(ContentType::valueOf)
+            val pick = container.content.pick(if (isTest) PickSource.MANUAL else PickSource.DAILY, type)
             Notifications.showPick(applicationContext, pick)
             Result.success()
+        } catch (e: CancellationException) {
+            throw e // Work was stopped or replaced; let WorkManager handle it rather than retrying.
         } catch (e: Exception) {
+            Log.w(TAG, "Daily pick failed (attempt ${runAttemptCount + 1})", e)
             if (runAttemptCount < MAX_RETRIES) {
                 Result.retry()
             } else {
@@ -44,14 +51,17 @@ class DailyPickWorker(context: Context, params: WorkerParameters) : CoroutineWor
         ForegroundInfo(Notifications.WORKING_ID, Notifications.workingNotification(applicationContext))
 
     companion object {
+        private const val TAG = "DailyPickWorker"
         private const val KEY_TEST = "test"
+        private const val KEY_TYPE = "type"
         private const val MAX_RETRIES = 3
 
-        fun enqueue(context: Context, test: Boolean = false) {
+        /** [type] forces a sutta or a talk (test notifications only); null means the usual coin flip. */
+        fun enqueue(context: Context, test: Boolean = false, type: ContentType? = null) {
             val request = OneTimeWorkRequestBuilder<DailyPickWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
-                .setInputData(workDataOf(KEY_TEST to test))
+                .setInputData(workDataOf(KEY_TEST to test, KEY_TYPE to type?.name))
                 .build()
             val name = if (test) "test-pick" else "daily-pick"
             WorkManager.getInstance(context).enqueueUniqueWork(name, ExistingWorkPolicy.REPLACE, request)
